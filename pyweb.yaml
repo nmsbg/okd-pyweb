@@ -1,0 +1,105 @@
+apiVersion: v1
+kind: Template
+labels:
+  template: pyweb
+message: PyWeb NMSolutions
+metadata:
+  annotations:
+    description: Python web 
+    iconClass: icon-python
+    tags: pyweb
+  name: pyweb
+  namespace: openshift
+objects:
+
+- apiVersion: v1
+  kind: ServiceAccount
+  metadata:
+    name: rfbocr
+
+- apiVersion: "v1"
+  kind: "ImageStream"
+  metadata:
+    name: "pyweb-okd"
+
+- apiVersion: v1
+  kind: Service
+  metadata:
+    name: pyweb-service
+  spec:
+    ports:
+    - name: pyweb-service
+      port: 7070
+      protocol: TCP
+      targetPort: 7070
+    selector:
+      sname: pyweb
+    sessionAffinity: None
+    type: ClusterIP
+
+- apiVersion: "v1"
+  kind: "BuildConfig"
+  metadata:
+    name: "pyweb-okd"
+  spec:
+    triggers:
+      - type: ConfigChange
+      - type: ImageChange
+    source:
+      type: Git
+      git:
+        uri: https://github.com/nmsbg/okd-pyweb.git
+    strategy:
+      type: "Docker"
+      dockerStrategy:
+        from:
+          kind: "DockerImage"
+          name: "python:3"
+    output:
+      to:
+        kind: "ImageStreamTag"
+        name: "pyweb-okd:latest"
+
+- apiVersion: "v1"
+  kind: DeploymentConfig
+  metadata:
+    name: "pyweb-node"
+  spec:
+    replicas: 1
+    template:
+      metadata:
+        labels:
+          name: "pyweb-node"
+          sname: "pyweb"
+      spec:
+        containers:
+        - name: "pyweb-node"
+          image: "pyweb-node"
+          ports:
+          - containerPort: 7070
+            protocol: TCP
+          volumeMounts:
+          - name: "img-claim"
+            mountPath: "/data"
+        volumes:
+        - name: "img-claim"
+          persistentVolumeClaim:
+            claimName: "rbb-pvc"
+        serviceAccount: rfbocr
+        serviceAccountName: rfbocr
+    replicas: 1
+    triggers:
+      - type: "ConfigChange"
+      - type: "ImageChange"
+        imageChangeParams:
+          automatic: true
+          containerNames:
+            - "pyweb-node"
+          from:
+            kind: "ImageStreamTag"
+            name: "pyweb-okd:latest"
+    strategy:
+      type: "Rolling"
+    paused: false
+    revisionHistoryLimit: 2
+    minReadySeconds: 0
