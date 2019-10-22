@@ -79,12 +79,12 @@ objects:
           - containerPort: 7070
             protocol: TCP
           volumeMounts:
-          - name: "img-claim"
-            mountPath: "/data"
+          - name: "json-claim"
+            mountPath: "/uploads"
         volumes:
-        - name: "img-claim"
+        - name: "json-claim"
           persistentVolumeClaim:
-            claimName: "rbb-pvc"
+            claimName: "json-pvc"
         serviceAccount: rfbocr
         serviceAccountName: rfbocr
     replicas: 1
