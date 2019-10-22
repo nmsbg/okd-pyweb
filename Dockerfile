@@ -13,8 +13,8 @@ RUN groupadd -r rfbocr && useradd -r -g rfbocr -d /home/rfbocr -m rfbocr
 
 RUN pip install httpserver
 
-VOLUME /data
-WORKDIR /data
+VOLUME /uploads
+WORKDIR /uploads
 
 USER rfbocr
 
